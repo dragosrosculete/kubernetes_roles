@@ -1,0 +1,47 @@
+apiVersion: elbv2.k8s.aws/v1beta1
+kind: TargetGroupBinding
+metadata:
+  name: istio-ingressgateway-internal-http
+  namespace: istio-system 
+spec:
+  serviceRef:
+    name: istio-ingressgateway-internal
+    port: 80
+  TargetType: ip
+  targetGroupARN: {{aws_ingress_lb_group_internal_http_arn}}
+---
+apiVersion: elbv2.k8s.aws/v1beta1
+kind: TargetGroupBinding
+metadata:
+  name: istio-ingressgateway-internal-https
+  namespace: istio-system 
+spec:
+  serviceRef:
+    name: istio-ingressgateway-internal
+    port: 443
+  TargetType: ip
+  targetGroupARN: {{aws_ingress_lb_group_internal_https_arn}}
+---
+apiVersion: elbv2.k8s.aws/v1beta1
+kind: TargetGroupBinding
+metadata:
+  name: istio-ingressgateway-external-http
+  namespace: istio-system 
+spec:
+  serviceRef:
+    name: istio-ingressgateway-external
+    port: 80
+  TargetType: ip
+  targetGroupARN: {{aws_ingress_lb_group_external_http_arn}}
+---
+apiVersion: elbv2.k8s.aws/v1beta1
+kind: TargetGroupBinding
+metadata:
+  name: istio-ingressgateway-external-https
+  namespace: istio-system
+spec:
+  serviceRef:
+    name: istio-ingressgateway-external
+    port: 443
+  TargetType: ip
+  targetGroupARN: {{aws_ingress_lb_group_external_https_arn}}

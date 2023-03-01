@@ -1,0 +1,17 @@
+##Important modify priority-expander.yaml.j2 should use the name of the node group when setting priorities
+---
+  - name: Install Autoscaler
+    k8s:
+      state: present
+      definition: "{{ lookup('template', 'autoscaler.yaml.j2') }}"
+      validate:
+        fail_on_error: yes
+        strict: yes
+
+  - name: Enable priority expander ( uses ASG name to determine where to launch instance, high number = high priority)
+    k8s:
+      state: present
+      definition: "{{ lookup('template', 'priority-expander.yaml.j2') }}"
+      validate:
+        fail_on_error: yes
+        strict: yes

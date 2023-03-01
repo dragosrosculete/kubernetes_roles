@@ -1,0 +1,60 @@
+#This exposes Istio and works in combination with AWS ingress controller
+---
+  - name: Istio version
+    set_fact:
+      istioctl_version: '1.11.8'
+
+  - name: Check Istio exists
+    shell: kubectl get deployment -n istio-system istiod -o jsonpath='{.metadata.labels.operator\.istio\.io/version}'
+    ignore_errors: true
+    register: istio_install_status
+    changed_when: false
+
+  - name: Download Istioctl
+    shell: |
+      cd /tmp
+      curl -L https://istio.io/downloadIstio | ISTIO_VERSION={{ istioctl_version }} TARGET_ARCH=x86_64 sh -
+    when: istio_install_status.stdout != istioctl_version
+
+  - name: Copy profile
+    ansible.builtin.template:
+      src: with_nodeport.yaml.j2
+      dest: /tmp/istio-{{ istioctl_version }}/manifests/profiles/with_nodeport.yaml
+      owner: root
+      group: root
+      mode: '0755'
+    when: istio_install_status.stdout != istioctl_version
+
+  - name: Create a istio namespace
+    k8s:
+      state: present
+      definition:
+        apiVersion: v1
+        kind: Namespace
+        metadata:
+          name: istio-system
+          labels:
+            elbv2.k8s.aws/pod-readiness-gate-inject: enabled
+
+  - name: Install istio
+    shell: |
+      cd /tmp/istio-{{ istioctl_version }}
+      export PATH=$PWD/bin:$PATH
+      istioctl install --set profile=empty -y -f manifests/profiles/with_nodeport.yaml
+    when: istio_install_status.stdout != istioctl_version
+
+  - name: Install Gateways
+    k8s:
+      state: present
+      definition: "{{ lookup('template', 'gateways.yaml.j2') }}"
+      validate:
+        fail_on_error: yes
+        strict: yes
+
+  - name: Install envoy filter
+    k8s:
+      state: present
+      definition: "{{ lookup('template', 'envoyfilter.yaml.j2') }}"
+      validate:
+        fail_on_error: yes
+        strict: yes

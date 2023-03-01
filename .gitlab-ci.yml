@@ -1,0 +1,18 @@
+image:
+  name: "registry/common:latest" ## can build an image for gitlab to run the build, example in the repo docker_images/docker_common
+
+stages:
+  - apply
+
+devops:
+  stage: apply
+  tags:
+    - docker
+  environment:
+    name: devops
+  only:
+    - dev
+  script:
+    - ansible-playbook -i "envs/${CI_ENVIRONMENT_NAME}" --extra-vars "CI_PROJECT_DIR=${CI_PROJECT_DIR}" ${CI_ENVIRONMENT_NAME}.yaml
+  allow_failure: false
+  when: manual

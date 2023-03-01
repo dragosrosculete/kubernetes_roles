@@ -1,0 +1,111 @@
+#Full values here: https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/values.yaml
+#This Role uses thanos sidecar and expects to bind it to an AWS NLB to expose the metrics for scrapping
+#Expects a global Thanos configured outisde the cluster, to handle multiple EKS clusters.
+#Doesn't deploy grafana as it expects to use the Global Grafana.
+#All of this can be easily configured and disabled to have grafana in same cluster and disable thanos sidecar.
+#Uses Istio to expose alertmanager and prometheus dns
+# Should configure   iam.amazonaws.com/role: arn:aws:iam::[% aws_account_id %]:role/[% prometheus.iam_role %]  to access aws resources 
+
+
+- name: Create a Kubernetes namespace
+  k8s:
+    name: "monitoring"
+    api_version: v1
+    kind: Namespace
+    state: present
+
+- name: Create Thanos objectstore secret
+  k8s:
+    state: present
+    namespace: monitoring
+    definition: "{{ lookup('template', 'thanos-objsore-config.yaml.j2') }}"
+    apply: true
+    force: true
+    validate:
+      fail_on_error: yes
+      strict: yes
+  register: thanos_objectstore
+
+- name: Add Prometheus chart repo
+  kubernetes.core.helm_repository:
+    name: prometheus-community
+    repo_url: "https://prometheus-community.github.io/helm-charts"
+
+- name: Deploy Prometheus
+  kubernetes.core.helm:
+    update_repo_cache: yes
+    create_namespace: yes
+    release_name: prometheus
+    release_namespace: monitoring
+    chart_ref: prometheus-community/kube-prometheus-stack
+    chart_version: 44.3.0
+    values: "{{ lookup('template', 'values.yaml.j2') | from_yaml }}"
+
+- name: Add Prometheus Adapter chart repo
+  kubernetes.core.helm_repository:
+    name: prometheus-community
+    repo_url: "https://prometheus-community.github.io/helm-charts"
+
+- name: Deploy Prometheus Adapter
+  kubernetes.core.helm:
+    update_repo_cache: yes
+    create_namespace: yes
+    release_name: prometheus-adapter
+    release_namespace: monitoring
+    chart_ref: prometheus-community/prometheus-adapter 
+    chart_version: 3.0.2
+    values: "{{ lookup('template', 'adapter_values.yaml.j2') | from_yaml }}"
+
+- name: Create alertmanager rules
+  k8s:
+    state: present
+    definition: "{{ lookup('template', 'alertmanager_rules.yaml.j2') }}"
+    validate:
+      fail_on_error: yes
+      strict: yes
+
+- name: Install prometheus ingress route
+  k8s:
+    state: present
+    definition: "{{ lookup('template', 'ingressroute_prometheus.yaml.j2') }}"
+    validate:
+      fail_on_error: yes
+      strict: yes
+
+- name: Install alertmanager ingress route
+  k8s:
+    state: present
+    definition: "{{ lookup('template', 'ingressroute_alertmanager.yaml.j2') }}"
+    validate:
+      fail_on_error: yes
+      strict: yes
+
+- name: Create servicemonitor for Istio 
+  k8s:
+    state: present
+    definition: "{{ lookup('template', 'templates/servicemonitor.yaml.j2') }}"
+    validate:
+      fail_on_error: yes
+      strict: yes
+
+- name: Install Autoscaler metrics
+  k8s:
+    state: present
+    definition: "{{ lookup('template', 'autoscaler_servicemonitor.yaml.j2') }}"
+    validate:
+      fail_on_error: yes
+      strict: yes
+
+- name: Expose Thanos sidecar externally
+  k8s:
+    state: present
+    namespace: monitoring
+    definition: "{{ lookup('template', 'thanos_sidecar_external.yaml.j2') }}"
+    apply: true
+    validate:
+      fail_on_error: yes
+      strict: yes
+
+- name: restart prometheus pods
+  shell: kubectl rollout restart -n monitoring statefulset/prometheus-prometheus-kube-prometheus-prometheus
+  when: thanos_objectstore.changed

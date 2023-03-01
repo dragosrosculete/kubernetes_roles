@@ -1,0 +1,16 @@
+---
+  - name: Test app
+    k8s:
+      state: present
+      definition: "{{ lookup('template', 'app.yaml.j2') }}"
+      validate:
+        fail_on_error: yes
+        strict: yes
+
+  - name: Test ingress apply
+    k8s:
+      state: present
+      definition: "{{ lookup('template', 'app_ingress.yaml.j2') }}"
+      validate:
+        fail_on_error: yes
+        strict: yes

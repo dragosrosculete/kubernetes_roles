@@ -1,0 +1,38 @@
+---
+- name: Get STS credentials to be used in Environment
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Run assume role
+      sts_assume_role:
+        role_arn: "{{ sts_role_arn }}"
+        role_session_name: "{{ sts_role_session_name }}"
+        region: "{{ aws_region }}"
+      register: assumed_role
+      changed_when: false
+
+    - name: Exit if unable to assume role
+      fail:
+        msg: "Unable to assume role."
+      when: assumed_role.failed
+
+- name: Create AWS resources
+  hosts: localhost
+  connection: local
+  environment:
+    AWS_ACCESS_KEY_ID: "{{ assumed_role.sts_creds.access_key }}"
+    AWS_SECRET_ACCESS_KEY: "{{ assumed_role.sts_creds.secret_key }}"
+    AWS_SESSION_TOKEN: "{{ assumed_role.sts_creds.session_token }}"
+    K8S_AUTH_KUBECONFIG: "{{CI_PROJECT_DIR}}/config"
+    KUBECONFIG: "{{CI_PROJECT_DIR}}/config"
+  roles:
+    - role: credentials
+    - role: kube2iam_2.6.0
+    - role: autoscaler_1.22.1
+    - role: istioctl_1.11.8
+    - role: kiali
+    - role: aws-ingress_2.4.6
+    - role: metrics-server_0.6.0
+    - role: monitor_44
+    - role: logging
+    - role: testapp

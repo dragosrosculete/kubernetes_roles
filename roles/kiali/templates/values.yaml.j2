@@ -1,0 +1,14 @@
+#jinja2:variable_start_string:'[%' , variable_end_string:'%]'
+
+cr:
+  create: true
+  name: kiali-operator
+  namespace: istio-system
+
+resources:
+  requests:
+    cpu: "200m"
+    memory: "300Mi"
+  limits:
+    cpu: "300m"
+    memory: "600Mi"  

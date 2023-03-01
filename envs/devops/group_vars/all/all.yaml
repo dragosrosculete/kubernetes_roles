@@ -1,0 +1,35 @@
+---
+env: "devops"
+ansible_python_interpreter: /usr/bin/python3
+aws_region: "eu-west-1"
+cluster_name: "eks-devops"
+aws_account_id: "<change-me>"
+sts_role_arn: "arn:aws:iam::<change-me>:role/iam_role_with_sufficient_access"
+sts_role_session_name: "gitlab"
+kube2iam_autoscaler: "kube2iam_autoscaler"
+aws_ingress_nlb_group_internal_thanos_arn: "arn:aws:elasticloadbalancing:eu-west-1:<change-me>:targetgroup/tf-20220106100525301100000001/<change-me>"
+aws_ingress_lb_group_internal_http_arn: "arn:aws:elasticloadbalancing:eu-west-1:<change-me>:targetgroup/tf-20210609044411954500000003/<change-me>"
+aws_ingress_lb_group_internal_https_arn: "arn:aws:elasticloadbalancing:eu-west-1:<change-me>:targetgroup/tf-20210609044411954500000002/<change-me>"
+aws_ingress_lb_group_external_http_arn: "arn:aws:elasticloadbalancing:eu-west-1:<change-me>:targetgroup/tf-20210609044411954500000004/<change-me>"
+aws_ingress_lb_group_external_https_arn: "arn:aws:elasticloadbalancing:eu-west-1:<change-me>:targetgroup/tf-20210609044411952800000001/<change-me>"
+aws_ingress_role_arn: "arn:aws:iam::<change-me>:role/AmazonEKSLoadBalancerControllerRole"
+es_domain: "elk.<change-me>.com"
+logging:
+  iam_role: "kube2iam_logging"
+jaeger_operator_version: "1.20"
+kiali_operator_version: "1.35"
+eks_kiali_dns: "kiali.internal.eks.<change-me>.com"
+prometheus:
+  version: "v2.41.0"
+  alertmanager_version: "v0.25.0"
+  thanos_version: "v0.30.1"
+  iam_role: "kube2iam_prometheus"
+  thanos_s3: "<change-me>-eu-west-1-thanos"
+  thanos_s3_endpoint: "s3.eu-west-1.amazonaws.com"
+  grafana_enabled: false
+  dns: "prometheus.internal.eks.<change-me>.com"
+  alertmanager_dns: "alertmanager.internal.eks.<change-me>.com"
+  thanos_dns: "thanos-sidecar.internal.eks.<change-me>.com:10901"
+testapp:
+  internal: "dr.internal.eks.<change-me>.com"
+  external: "dr.eks.<change-me>.com"

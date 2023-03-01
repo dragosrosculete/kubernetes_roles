@@ -1,0 +1,8 @@
+---
+  - name: Install Metrics Server
+    k8s:
+      state: present
+      definition: "{{ lookup('template', 'metrics-server.yaml.j2') }}"
+      validate:
+        fail_on_error: yes
+        strict: yes

@@ -1,0 +1,16 @@
+---
+apiVersion: v1
+stringData:
+  thanos.yaml: |-
+    type: s3
+    config:
+      bucket: {{ prometheus.thanos_s3 }}
+      endpoint: {{ prometheus.thanos_s3_endpoint }}
+      put_user_metadata:
+        "X-Amz-Acl": "bucket-owner-full-control"
+    prefix: "{{ aws_region }}/{{ cluster_name }}"
+kind: Secret
+metadata:
+  name: thanos-objstore-config
+  namespace: monitoring
+type: Opaque

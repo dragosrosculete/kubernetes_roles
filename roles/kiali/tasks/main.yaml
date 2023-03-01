@@ -1,0 +1,43 @@
+---
+  - name: Add Kiali chart repo
+    kubernetes.core.helm_repository:
+      name: kiali-operator
+      repo_url: "https://kiali.org/helm-charts"
+
+  - name: Deploy Kiali
+    kubernetes.core.helm:
+      update_repo_cache: yes
+      create_namespace: yes
+      release_name: kiali-operator
+      release_namespace: kiali-operator
+      chart_ref: kiali-operator/kiali-operator
+      chart_version: 1.35.0
+      values: "{{ lookup('template', 'values.yaml.j2') | from_yaml }}"
+
+  - name: Install Kiali CR
+    k8s:
+      state: present
+      definition: "{{ lookup('template', 'templates/kiali_cr.yaml.j2') }}"
+      validate:
+        fail_on_error: yes
+        strict: yes
+
+  - name: Install Virtualservices
+    k8s:
+      state: present
+      definition: "{{ lookup('template', 'virtualservices.yaml.j2') }}"
+      validate:
+        fail_on_error: yes
+        strict: yes
+
+  - name: Kiali labels template
+    template:
+      src: "templates/kiali_label.yaml.j2"
+      dest: "kiali_label.yaml"
+      mode: 0755
+
+  - name: Add labels Kiali
+    shell: |
+      sleep 10
+      kubectl patch deployment kiali-operator -n kiali-operator --patch "$(cat kiali_label.yaml)"
+      kubectl patch deployment kiali -n istio-system --patch "$(cat kiali_label.yaml)"

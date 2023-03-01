@@ -1,0 +1,32 @@
+#configured with ElasticSearch Output
+---
+  - name: Create a Kubernetes namespace
+    k8s:
+      name: "logging"
+      api_version: v1
+      kind: Namespace
+      state: present
+
+  - name: Install fluentd permissions 
+    k8s:
+      state: present
+      definition: "{{ lookup('template', 'permissions.yaml.j2') }}"
+      validate:
+        fail_on_error: yes
+        strict: yes
+
+  - name: Install fluentd configmap 
+    k8s:
+      state: present
+      definition: "{{ lookup('template', 'configmap.yaml.j2') }}"
+      validate:
+        fail_on_error: yes
+        strict: yes
+
+  - name: Install fluentd for logging
+    k8s:
+      state: present
+      definition: "{{ lookup('template', 'daemonset.yaml.j2') }}"
+      validate:
+        fail_on_error: yes
+        strict: yes

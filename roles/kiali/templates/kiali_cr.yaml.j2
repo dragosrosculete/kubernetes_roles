@@ -1,0 +1,30 @@
+apiVersion: kiali.io/v1alpha1
+kind: Kiali
+metadata:
+  namespace: istio-system
+  name: kiali
+spec:
+  istio_namespace: "istio-system"
+  istio_component_namespaces:
+    prometheus: monitoring
+  auth:
+    strategy: token
+  deployment:
+    accessible_namespaces:
+    - '**'
+    resources:
+      requests:
+        memory: "200Mi"
+        cpu: "30m"
+      limits:
+        memory: "400Mi"
+        cpu: "100m"
+  external_services:
+      prometheus:
+        cache_duration: 10
+        cache_enabled: true
+        cache_expiration: 300
+        url: "http://prometheus-operated.monitoring:9090"
+      tracing:
+        enable: true
+        in_cluster_url: 'http://jaeger-query.observability:16686'

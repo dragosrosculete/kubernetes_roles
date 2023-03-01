@@ -1,0 +1,11 @@
+apiVersion: elbv2.k8s.aws/v1beta1
+kind: TargetGroupBinding
+metadata:
+  name: prometheus-kube-prometheus-thanos-discovery
+  namespace: monitoring
+spec:
+  serviceRef:
+    name: prometheus-kube-prometheus-thanos-discovery
+    port: 10901
+  TargetType: ip
+  targetGroupARN: {{aws_ingress_nlb_group_internal_thanos_arn}}

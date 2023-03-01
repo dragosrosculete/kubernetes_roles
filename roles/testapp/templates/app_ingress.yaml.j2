@@ -1,0 +1,40 @@
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: testapp-intrnal
+  namespace: default
+spec:
+  hosts:
+  - "{{ testapp.internal }}"
+  gateways:
+  - istio-system/istio-ingressgateway-internal
+  http:
+  - match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        host: whoami.default.svc.cluster.local
+        port:
+          number: 80
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: testapp-external
+  namespace: default
+spec:
+  hosts:
+  - "{{ testapp.external }}"
+  gateways:
+  - istio-system/istio-ingressgateway-external
+  http:
+  - match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        host: whoami.default.svc.cluster.local
+        port:
+          number: 80

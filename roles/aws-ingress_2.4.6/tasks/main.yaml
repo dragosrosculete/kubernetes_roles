@@ -1,0 +1,45 @@
+---
+  - name: Create ServiceAccount
+    k8s:
+      state: present
+      definition: "{{ lookup('template', 'rbac.yaml.j2') }}"
+      validate:
+        fail_on_error: yes
+        strict: yes
+
+  - name: Install Cert-Manager
+    k8s:
+      state: present
+      definition: "{{ lookup('template', 'cert-manager.yaml.j2') }}"
+      validate:
+        fail_on_error: yes
+        strict: yes
+
+  - name: Sleep for 20s to make sure Cert-Manager is ready #need to implement smart check
+    wait_for:
+      timeout: 20
+
+  - name: Install AWS Ingress Controller
+    k8s:
+      state: present
+      definition: "{{ lookup('template', 'aws-ingress.yaml.j2') }}"
+      validate:
+        fail_on_error: no
+        strict: no
+
+  - name: Sleep for 30s to make sure AWS Ingress Controller is ready #need to implement smart check
+    wait_for:
+      timeout: 30
+
+  - name: Configure LB target groups
+    k8s:
+      state: present
+      definition: "{{ lookup('template', 'targetGroup.yaml.j2') }}"
+      validate:
+        fail_on_error: yes
+        strict: yes
+    register: aws_target_group
+
+  - name: Restart Istio pods
+    shell: kubectl delete pod -n istio-system -l app=istio-ingressgateway
+    when: aws_target_group.changed
